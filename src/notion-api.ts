@@ -22,6 +22,7 @@ export class NotionAPI {
   private readonly notion: Client;
   private currentPageId: string | null = null;
   private currentPageContent: PageContentItem[] = [];
+  private minLevel: number = 1;
 
   constructor(config: NotionRecallConfig) {
     this.notion = new Client({ auth: config.notionToken });
@@ -56,18 +57,32 @@ export class NotionAPI {
         this.currentPageContent = [];
         return false;
     }
-}
+  }
+
   /**
-   * Gets all H1 headings from the current page
+   * Gets all top-level headings from the current page
+   * @returns Array of heading texts if found, null if no headings exist
    */
-  public getHeadingOnes(): string[] {
+  public getTopLevelHeadings(): string[] | null {
     if (!this.currentPageContent) {
-      throw new Error('No page content loaded. Call getPageContentInDatabaseHierarchy first.');
+      throw new Error('No page content loaded. Call getPageFromWorkspace first.');
     }
-    
-    return this.currentPageContent
-      .filter(item => item.type === 'heading' && item.level === 1)
-      .map(item => (item as HeadingContent).text);
+
+    const headings = this.currentPageContent.filter(
+      item => item.type === 'heading'
+    ) as HeadingContent[];
+
+    if (headings.length === 0) {
+      return null;
+    }
+
+    // Find the minimum heading level present in the document
+    this.minLevel = Math.min(...headings.map(h => h.level));
+
+    // Return all headings with this minimum level
+    return headings
+      .filter(h => h.level === this.minLevel)
+      .map(h => h.text);
   }
 
   /**
@@ -85,7 +100,7 @@ export class NotionAPI {
     
     for (const item of this.currentPageContent) {
       if (item.type === 'heading') {
-        if (item.level === 1 && item.text === headingText) {
+        if (item.level === this.minLevel && item.text === headingText) {
           foundHeading = true;
           continue;
         }
@@ -160,22 +175,6 @@ export class NotionAPI {
     }
 
     return content;
-  }
-
-  private formatPageContent(content: PageContentItem[]): string {
-    let result = '';
-    let currentHeadingLevel = 0;
-
-    for (const item of content) {
-      if (item.type === 'heading') {
-        currentHeadingLevel = item.level;
-        result += `\n\n${item.text}\n`;
-      } else {
-        result += item.text + '\n';
-      }
-    }
-
-    return result.trim().replace(/\n{3,}/g, '\n\n');
   }
 
   private _extractPageTitle(page: any): string {

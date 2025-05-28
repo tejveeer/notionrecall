@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { NotionAPI } from './notion-api';
 import { DeepseekAPI } from './deepseek-api';
 import PromptSync from 'prompt-sync';
+import { createTester } from './testers/tester-interface';
 
 const prompt = PromptSync();
 
@@ -23,20 +24,16 @@ async function main() {
         return;
     }
 
-    const pageHeadings = nopi.getHeadingOnes();
+    const pageHeadings = nopi.getTopLevelHeadings();
 
     console.log(pageHeadings);
     const selectedHeadingNumber = parseInt(prompt("Which heading do you want to select? (1, 2, ...) "));
-    const notionResult = nopi.getContentOfHeading(pageHeadings[selectedHeadingNumber - 1]);
+    const notionResult = nopi.getContentOfHeading(pageHeadings![selectedHeadingNumber - 1]);
 
-    console.log("Got results from notion!");
-    const context = `
-        Generate quiz questions based on the content provided to you.
-        Send the questions to me in json format where you have 
-        {Question 1: {question: <the question here>, options: [option1, ..., optionN], answer: <correct answer>}, ..., Question N: { ... }}
-    `
-    const deepseekResult = await depi.sendToDeepseek(notionResult, context);
-    console.log(deepseekResult);
+    const tester = createTester('tf', depi, notionResult);
+    await tester.getQuestions(5)
+
+    console.log(tester.getCurrentQuestion());
 }
 
 main();
