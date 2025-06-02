@@ -24,16 +24,20 @@ async function main() {
         return;
     }
 
-    const pageHeadings = nopi.getTopLevelHeadings();
+    const pageHeadings = nopi.getHeadingHierarchy();
 
     console.log(pageHeadings);
     const selectedHeadingNumber = parseInt(prompt("Which heading do you want to select? (1, 2, ...) "));
-    const notionResult = nopi.getContentOfHeading(pageHeadings![selectedHeadingNumber - 1]);
+    // const notionResult = nopi.getContentOfHeading(pageHeadings![selectedHeadingNumber - 1]);
 
-    const tester = createTester('tf', depi, notionResult);
-    await tester.getQuestions(5)
+    // console.log(notionResult);
+    // const tester = createTester('tf', depi, notionResult);
+    // await tester.getQuestions(5)
 
-    console.log(tester.getCurrentQuestion());
+    // while (tester.hasQuestion()) {
+    //     console.log(tester.getCurrentQuestion());
+    //     prompt("");
+    // }
 }
 
 main();

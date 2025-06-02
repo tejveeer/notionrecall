@@ -25,7 +25,7 @@ type Question = MultipleChoice | TrueFalse | FillInBlank | ShortAnswer | Explana
 abstract class TesterABC {
     abstract questionStructure: string;
     
-    public currentQuestion: number = 0;
+    private currentQuestion: number = 0;
     protected testingQuestions: Question[] | null = null;
 
     public constructor(protected chatbotHandler: DeepseekAPI, protected content: string) {}
@@ -43,9 +43,9 @@ abstract class TesterABC {
             Generate exactly ${amountOfQuestions} questions.`;
             const response = await this.chatbotHandler.sendToDeepseek(context, this.content);
             const jsonString = this.extractJson(response);
-            console.log(jsonString);
             const parsedQuestions = this.validateQuestions(JSON.parse(jsonString), amountOfQuestions);
     
+            console.log(`Number of questions: ${parsedQuestions.length}`)
             this.testingQuestions = parsedQuestions;
             return parsedQuestions;
         } catch (error) {
@@ -55,14 +55,19 @@ abstract class TesterABC {
     }
 
     public getCurrentQuestion(): Question | null {
-        return this.testingQuestions?.[this.currentQuestion] ?? null;
+        const res = this.testingQuestions?.[this.currentQuestion] ?? null;
+        if (res == null) {
+            return null;
+        }
+
+        this.currentQuestion++;
+        return res;
     }
 
-    public moveToNextQuestion(): boolean {
-        if (!this.testingQuestions || this.currentQuestion >= this.testingQuestions.length - 1) {
+    public hasQuestion(): boolean {
+        if (!this.testingQuestions || this.currentQuestion >= this.testingQuestions.length) {
             return false;
         }
-        this.currentQuestion++;
         return true;
     }
     

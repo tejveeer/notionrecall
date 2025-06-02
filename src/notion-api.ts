@@ -5,24 +5,24 @@ interface NotionRecallConfig {
   notionToken: string;
 }
 
-interface HeadingContent {
-  type: 'heading';
-  level: number;
+interface HeadingNode {
   text: string;
+  level: number;
+  id: string; // block ID for later content retrieval
+  children: HeadingNode[];
 }
 
 interface BlockContent {
   type: 'block';
   text: string;
+  children: BlockContent[];
 }
-
-type PageContentItem = HeadingContent | BlockContent;
 
 export class NotionAPI {
   private readonly notion: Client;
   private currentPageId: string | null = null;
-  private currentPageContent: PageContentItem[] = [];
-  private minLevel: number = 1;
+  private headingHierarchy: HeadingNode[] = [];
+  private blockMap: Map<string, any> = new Map(); // Stores all blocks by ID
 
   constructor(config: NotionRecallConfig) {
     this.notion = new Client({ auth: config.notionToken });
@@ -30,96 +30,185 @@ export class NotionAPI {
 
   public async getPageFromWorkspace(pageName: string): Promise<boolean> {
     try {
-        const response = await this.notion.search({
-            query: pageName,
-            filter: { property: 'object', value: 'page' }
-        });
+      const response = await this.notion.search({
+        query: pageName,
+        filter: { property: 'object', value: 'page' }
+      });
 
-        const matchingPage = response.results.find((page): page is PageObjectResponse => {
-            if (!isFullPage(page)) return false;
-            const title = this._extractPageTitle(page);
-            return title.toLowerCase().includes(pageName.toLowerCase());
-        });
+      const matchingPage = response.results.find((page): page is PageObjectResponse => {
+        if (!isFullPage(page)) return false;
+        const title = this._extractPageTitle(page);
+        return title.toLowerCase().includes(pageName.toLowerCase());
+      });
 
-        if (!matchingPage) {
-            this.currentPageId = null;
-            this.currentPageContent = [];
-            return false;
-        }
+      if (!matchingPage) {
+        this.currentPageId = null;
+        this.headingHierarchy = [];
+        return false;
+      }
 
-        this.currentPageId = matchingPage.id;
-        this.currentPageContent = await this.parsePageContent(matchingPage.id);
-        return true;
+      this.currentPageId = matchingPage.id;
+      await this.buildHeadingHierarchy(matchingPage.id);
+      return true;
 
     } catch (error) {
-        console.error('Error fetching page from workspace:', error);
-        this.currentPageId = null;
-        this.currentPageContent = [];
-        return false;
+      console.error('Error fetching page from workspace:', error);
+      this.currentPageId = null;
+      this.headingHierarchy = [];
+      return false;
     }
   }
 
-  /**
-   * Gets all top-level headings from the current page
-   * @returns Array of heading texts if found, null if no headings exist
-   */
-  public getTopLevelHeadings(): string[] | null {
-    if (!this.currentPageContent) {
-      throw new Error('No page content loaded. Call getPageFromWorkspace first.');
+  public getHeadingHierarchy(): HeadingNode[] {
+    if (!this.currentPageId) {
+      throw new Error('No page loaded. Call getPageFromWorkspace first.');
     }
-
-    const headings = this.currentPageContent.filter(
-      item => item.type === 'heading'
-    ) as HeadingContent[];
-
-    if (headings.length === 0) {
-      return null;
-    }
-
-    // Find the minimum heading level present in the document
-    this.minLevel = Math.min(...headings.map(h => h.level));
-
-    // Return all headings with this minimum level
-    return headings
-      .filter(h => h.level === this.minLevel)
-      .map(h => h.text);
+    return this.headingHierarchy;
   }
 
-  /**
-   * Gets the content under a specific H1 heading
-   * @param headingText - The exact text of the H1 heading to find
-   * @returns The content under the heading as a string
-   */
-  public getContentOfHeading(headingText: string): string {
-    if (!this.currentPageContent) {
-      throw new Error('No page content loaded. Call getPageContentInDatabaseHierarchy first.');
+  public async getContentForHeadings(acceptList: string[], rejectList: string[]): Promise<string> {
+    if (!this.currentPageId) {
+      throw new Error('No page loaded. Call getPageFromWorkspace first.');
     }
-
-    let foundHeading = false;
-    const content: string[] = [];
+  
+    // Find all heading nodes that match the accept list
+    const acceptedNodes = this.findAcceptedNodes(this.headingHierarchy, acceptList);
     
-    for (const item of this.currentPageContent) {
-      if (item.type === 'heading') {
-        if (item.level === this.minLevel && item.text === headingText) {
-          foundHeading = true;
-          continue;
+    // Filter out rejected nodes
+    const filteredNodes = this.filterRejectedNodes(acceptedNodes, rejectList);
+    
+    // Get content for remaining nodes
+    let content = '';
+    for (const node of filteredNodes) {
+      content += await this.getHeadingContent(node);
+    }
+  
+    return content;
+  }
+  
+  private async buildHeadingHierarchy(pageId: string): Promise<void> {
+    const blocks = await this.fetchPageContent(pageId);
+    this.blockMap = new Map(blocks.map(block => [block.id, block]));
+    
+    const headingNodes: HeadingNode[] = [];
+    const stack: { node: HeadingNode; level: number }[] = [];
+
+    for (const block of blocks) {
+      if (!isFullBlock(block)) continue;
+      
+      if (block.type.startsWith('heading_')) {
+        const level = parseInt(block.type.split('_')[1]);
+        const text = this._extractBlockText(block);
+        
+        if (!text) continue;
+        
+        const newNode: HeadingNode = {
+          text,
+          level,
+          id: block.id,
+          children: []
+        };
+
+        // Find the right parent in the stack
+        while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+          stack.pop();
         }
-        // Stop if we encounter another H1
-        if (item.level === 1 && foundHeading) {
-          break;
+
+        if (stack.length === 0) {
+          headingNodes.push(newNode);
+        } else {
+          stack[stack.length - 1].node.children.push(newNode);
         }
+
+        stack.push({ node: newNode, level });
+      }
+    }
+
+    this.headingHierarchy = headingNodes;
+  }
+
+  private findAcceptedNodes(
+    nodes: HeadingNode[],
+    acceptList: string[],
+    parentAccepted: boolean = false
+  ): HeadingNode[] {
+    return nodes
+      .map(node => {
+        const isAccepted = parentAccepted || acceptList.includes(node.text);
+        return {
+          ...node,
+          children: this.findAcceptedNodes(node.children, acceptList, isAccepted)
+        };
+      })
+      .filter(node => {
+        // Keep if:
+        // 1. This node is explicitly accepted, OR
+        // 2. Any of its children are accepted, OR
+        // 3. Its parent was accepted
+        return acceptList.includes(node.text) || 
+               node.children.length > 0 ||
+               parentAccepted;
+      });
+  }
+  
+  private filterRejectedNodes(
+    nodes: HeadingNode[],
+    rejectList: string[]
+  ): HeadingNode[] {
+    return nodes
+      .filter(node => !rejectList.includes(node.text))
+      .map(node => ({
+        ...node,
+        children: this.filterRejectedNodes(node.children, rejectList)
+      }));
+  }
+  
+  private async getHeadingContent(headingNode: HeadingNode): Promise<string> {
+    let content = `# ${headingNode.text}\n\n`;
+    
+    // Get content between this heading and the next one at the same level
+    let currentBlockId = headingNode.id;
+    const blocks: any[] = [];
+    
+    while (currentBlockId) {
+      const block = this.blockMap.get(currentBlockId);
+      if (!block) break;
+      
+      // Stop if we hit another heading at same or higher level
+      if (block.id !== headingNode.id && 
+          block.type.startsWith('heading_')) {
+        const level = parseInt(block.type.split('_')[1]);
+        if (level <= headingNode.level) break;
       }
       
-      if (foundHeading && item.type === 'block') {
-        content.push(item.text);
+      blocks.push(block);
+      
+      // Get next block (this is simplified - may need more complex logic)
+      const siblings = await this.notion.blocks.children.list({
+        block_id: this.currentPageId!,
+        start_cursor: currentBlockId,
+        page_size: 1
+      });
+      
+      currentBlockId = siblings.results[0]?.id;
+    }
+    
+    // Process the collected blocks
+    for (const block of blocks) {
+      if (block.id === headingNode.id) continue; // skip the heading itself
+      
+      const text = this._extractBlockText(block);
+      if (text) {
+        content += text + '\n\n';
       }
     }
-
-    if (!foundHeading) {
-      throw new Error(`Heading "${headingText}" not found.`);
+    
+    // Process children recursively
+    for (const child of headingNode.children) {
+      content += await this.getHeadingContent(child);
     }
-
-    return content.join('\n').trim();
+    
+    return content;
   }
 
   private async fetchPageContent(pageId: string): Promise<any[]> {
@@ -140,41 +229,6 @@ export class NotionAPI {
     }
 
     return blocks;
-  }
-
-  private async parsePageContent(pageId: string): Promise<PageContentItem[]> {
-    const blocks = await this.fetchPageContent(pageId);
-    const content: PageContentItem[] = [];
-
-    for (const block of blocks) {
-      if (!isFullBlock(block)) continue;
-
-      // Handle headings
-      if (block.type.startsWith("heading_")) {
-        const level = parseInt(block.type.split('_')[1]);
-        const text = this._extractBlockText(block);
-        
-        if (text) {
-          content.push({
-            type: 'heading',
-            level,
-            text,
-          });
-        }
-        continue;
-      }
-
-      // Handle other blocks
-      const text = this._extractBlockText(block);
-      if (text) {
-        content.push({
-          type: 'block',
-          text
-        });
-      }
-    }
-
-    return content;
   }
 
   private _extractPageTitle(page: any): string {
@@ -208,27 +262,27 @@ export class NotionAPI {
           .map((t: any) => t.plain_text)
           .join("");
       case "bulleted_list_item":
-        return "- " +
-          block.bulleted_list_item.rich_text
-            .map((t: any) => t.plain_text)
-            .join("");
+        return block.bulleted_list_item.rich_text
+          .map((t: any) => t.plain_text)
+          .join("");
       case "numbered_list_item":
-        return "1. " +
-          block.numbered_list_item.rich_text
-            .map((t: any) => t.plain_text)
-            .join("");
+        return block.numbered_list_item.rich_text
+          .map((t: any) => t.plain_text)
+          .join("");
       case "to_do":
-        return `[${block.to_do.checked ? "x" : " "}] ` +
-          block.to_do.rich_text.map((t: any) => t.plain_text).join("");
+        return block.to_do.rich_text.map((t: any) => t.plain_text).join("");
       case "quote":
-        return "> " +
-          block.quote.rich_text.map((t: any) => t.plain_text).join("");
+        return block.quote.rich_text.map((t: any) => t.plain_text).join("");
       case "code":
         return "```" +
           block.code.language +
           "\n" +
           block.code.rich_text.map((t: any) => t.plain_text).join("") +
           "\n```";
+      case "toggle":
+        return block.toggle.rich_text.map((t: any) => t.plain_text).join("");
+      case "callout":
+        return block.callout.rich_text.map((t: any) => t.plain_text).join("");
       default:
         return "";
     }
