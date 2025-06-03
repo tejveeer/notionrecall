@@ -1,4 +1,4 @@
-import { DeepseekAPI } from "../deepseek-api";
+import { DeepseekAPI } from "./deepseek-api";
 
 interface BaseQuestion {
     question: string;

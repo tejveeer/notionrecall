@@ -12,10 +12,9 @@ interface HeadingNode {
   children: HeadingNode[];
 }
 
-interface BlockContent {
-  type: 'block';
+interface SimplifiedHeadingNode {
   text: string;
-  children: BlockContent[];
+  children?: SimplifiedHeadingNode[];
 }
 
 export class NotionAPI {
@@ -59,11 +58,21 @@ export class NotionAPI {
     }
   }
 
-  public getHeadingHierarchy(): HeadingNode[] {
+  public getHeadingHierarchy(): SimplifiedHeadingNode[] {
     if (!this.currentPageId) {
       throw new Error('No page loaded. Call getPageFromWorkspace first.');
     }
-    return this.headingHierarchy;
+    return this.simplifyHierarchy(this.headingHierarchy);
+  }
+
+  private simplifyHierarchy(nodes: HeadingNode[]): SimplifiedHeadingNode[] {
+    return nodes.map(node => {
+      const simplifiedNode: { text: string; children?: any[] } = { text: node.text };
+      if (node.children.length > 0) {
+        simplifiedNode.children = this.simplifyHierarchy(node.children);
+      }
+      return simplifiedNode;
+    });
   }
 
   public async getContentForHeadings(acceptList: string[], rejectList: string[]): Promise<string> {
