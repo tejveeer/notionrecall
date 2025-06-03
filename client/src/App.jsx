@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from './components/ui/card';
+import { Input } from './components/ui/input';
+import { Button } from './components/ui/button';
 
 function Heading({ text, children }) {
   return (
-    <div style={{ marginLeft: '20px', marginTop: '10px' }}>
-      <strong>{text}</strong>
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold">{text}</CardTitle>
+      </CardHeader>
       {children && children.length > 0 && (
-        <div style={{ marginLeft: '20px' }}>
+        <CardContent>
           {children.map((child, index) => (
             <Heading key={index} text={child.text} children={child.children} />
           ))}
-        </div>
+        </CardContent>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -43,29 +48,42 @@ function App() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
+    }
+  };
+
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>Notion Recall</h1>
-      <input
-        type="text"
-        placeholder="Enter page name"
-        value={pageName}
-        onChange={(e) => setPageName(e.target.value)}
-        style={{ padding: '10px', width: '300px' }}
-      />
-      <button onClick={handleSubmit} style={{ marginLeft: '10px', padding: '10px' }}>
-        Fetch Page
-      </button>
-      <div style={{ marginTop: '20px' }}>
+    <div className="max-w-2xl mx-auto mt-12 text-center">
+      <h1 className="text-3xl font-bold mb-6">Notion Recall</h1>
+      <div className="flex gap-4 mb-6">
+        <Input
+          placeholder="Enter page name"
+          value={pageName}
+          onChange={(e) => setPageName(e.target.value)}
+          onKeyDown={handleKeyDown} // Listen for Enter key
+          className="flex-1"
+        />
+        <Button
+          onClick={handleSubmit}
+          className="px-4 py-2 text-white" // Light purple color
+        >
+          Fetch Page
+        </Button>
+      </div>
+      <div className="mb-6">
         <strong>Response:</strong>
         <p>{response}</p>
       </div>
       {headings && (
-        <div style={{ textAlign: 'left', marginTop: '20px', padding: '10px', border: '1px solid #ccc' }}>
+        <div>
           <strong>Headings:</strong>
-          {headings.map((node, index) => (
-            <Heading key={index} text={node.text} children={node.children} />
-          ))}
+          <div className="mt-4">
+            {headings.map((node, index) => (
+              <Heading key={index} text={node.text} children={node.children} />
+            ))}
+          </div>
         </div>
       )}
     </div>
