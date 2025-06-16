@@ -76,6 +76,36 @@ function generateIdsForHeadings(headings, parentId = null) {
   });
 }
 
+// First sanitization: Remove deselections whose parents are not selected
+function removeDeselectionsWithoutSelectedParents(selections, deselections) {
+  const sanitizedDeselections = new Set([...deselections].filter((id) => {
+    const parentId = id.split('.').slice(0, -1).join('.');
+    return selections.has(parentId);
+  }));
+  return sanitizedDeselections;
+}
+
+// Second sanitization: Remove child elements if their parent is in the set
+function removeChildElementsWithSelectedParents(set) {
+  const sanitizedSet = new Set([...set].filter((id) => {
+    const parentId = id.split('.').slice(0, -1).join('.');
+    return !set.has(parentId);
+  }));
+  return sanitizedSet;
+}
+
+// Sanitizes the selections and deselections sets
+function sanitizeHeadingSelections(selections, deselections) {
+  const sanitizedDeselections = removeDeselectionsWithoutSelectedParents(selections, deselections);
+  const sanitizedSelections = removeChildElementsWithSelectedParents(selections);
+  const finalDeselections = removeChildElementsWithSelectedParents(sanitizedDeselections);
+
+  return {
+    selections: sanitizedSelections,
+    deselections: finalDeselections,
+  };
+}
+
 function App() {
   const [pageName, setPageName] = useState('');
   const [response, setResponse] = useState('');
@@ -144,6 +174,13 @@ function App() {
     }
   };
 
+  const handleSanitizeAndPrint = () => {
+    const { selections, deselections } = headingSelections;
+    const sanitized = sanitizeHeadingSelections(selections, deselections);
+    console.log('Sanitized Selections:', sanitized.selections);
+    console.log('Sanitized Deselections:', sanitized.deselections);
+  };
+
   console.log(headingSelections);
   return (
     <div className="max-w-2xl mx-auto mt-12 text-center">
@@ -167,6 +204,14 @@ function App() {
           }`}
         >
           Fetch Page
+        </Button>
+      </div>
+      <div className="flex gap-4 mb-6">
+        <Button
+          onClick={handleSanitizeAndPrint}
+          className="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 cursor-pointer"
+        >
+          Sanitize and Print
         </Button>
       </div>
       <div className="mb-6">
