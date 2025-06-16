@@ -64,18 +64,6 @@ function Heading({
   );
 }
 
-function generateIdsForHeadings(headings, parentId = null) {
-  return headings.map((node, index) => {
-    const newId = parentId ? `${parentId}.${index + 1}` : `${index + 1}`;
-    
-    return {
-      id: newId,
-      text: node.text,
-      children: node.children ? generateIdsForHeadings(node.children, newId) : [],
-    };
-  });
-}
-
 // First sanitization: Remove deselections whose parents are not selected
 function removeDeselectionsWithoutSelectedParents(selections, deselections) {
   const sanitizedDeselections = new Set([...deselections].filter((id) => {
@@ -101,8 +89,8 @@ function sanitizeHeadingSelections(selections, deselections) {
   const finalDeselections = removeChildElementsWithSelectedParents(sanitizedDeselections);
 
   return {
-    selections: sanitizedSelections,
-    deselections: finalDeselections,
+    selections: Array.from(sanitizedSelections),
+    deselections: Array.from(finalDeselections),
   };
 }
 
@@ -137,7 +125,7 @@ function App() {
   const deselectHeading = (id) => {
     const ids = getIdOfHeadingChildren(id);
     setHeadingSelections((prev) => ({
-      deselections: new Set([...prev.deselections, ...ids]), 
+      deselections: new Set([...prev.deselections, ...ids]),
       selections: new Set([...prev.selections].filter(id => !ids.includes(id)))
     }));
   }
@@ -148,6 +136,12 @@ function App() {
 
   const handleSubmit = async () => {
     setIsButtonDisabled(true);
+    setHeadings(null);
+    setHeadingSelections({
+      selections: new Set(),
+      deselections: new Set(),
+    });
+
     try {
       const res = await fetch('http://localhost:3000/fetch-page', {
         method: 'POST',
@@ -157,9 +151,7 @@ function App() {
       const data = await res.json();
 
       if (data.success) {
-        const headingsWithId = generateIdsForHeadings(data.headings);
-        console.log(headingsWithId);
-        setHeadings(headingsWithId);
+        setHeadings(data.headings);
         setResponse('Page fetched successfully!');
       } else {
         setHeadings(null);
@@ -174,14 +166,31 @@ function App() {
     }
   };
 
-  const handleSanitizeAndPrint = () => {
+  const handleSelectedHeadingSubmission = async () => {
     const { selections, deselections } = headingSelections;
     const sanitized = sanitizeHeadingSelections(selections, deselections);
     console.log('Sanitized Selections:', sanitized.selections);
     console.log('Sanitized Deselections:', sanitized.deselections);
+
+    try {
+      const res = await fetch('http://localhost:3000/get-heading-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acceptList: sanitized.selections, rejectList: sanitized.deselections }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        console.log(data.content)
+      } else {
+        console.log("Unsuccessful fetch");
+      }
+    } catch (error) {
+      console.error('Error fetching content:', error);
+      setResponse('Error fetching page');
+    }
   };
 
-  console.log(headingSelections);
   return (
     <div className="max-w-2xl mx-auto mt-12 text-center">
       <h1 className="text-3xl font-bold mb-6">Notion Recall</h1>
@@ -208,10 +217,10 @@ function App() {
       </div>
       <div className="flex gap-4 mb-6">
         <Button
-          onClick={handleSanitizeAndPrint}
+          onClick={handleSelectedHeadingSubmission}
           className="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 cursor-pointer"
         >
-          Sanitize and Print
+          Submit
         </Button>
       </div>
       <div className="mb-6">
