@@ -2,50 +2,59 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './components/ui/card';
 import { Input } from './components/ui/input';
 import { Button } from './components/ui/button';
-import { Checkbox } from './components/ui/checkbox'; // Assuming Checkbox is available in your UI library
-import { ChevronRight } from 'lucide-react'; // Import ChevronRight from lucide-react
+import { Checkbox } from './components/ui/checkbox';
+import { ChevronRight } from 'lucide-react';
 
-function Heading({ text, children, ancestors = [], handleSelect, handleDeselect }) {
+function Heading({
+  id,
+  text,
+  children,
+  selectHeading,
+  deselectHeading,
+  isIdSelected
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isParentSelected = ancestors.some((ancestor) => ancestor.selected);
+  const isChecked = isIdSelected(id);
 
-  const handleCheckboxChange = (checked) => {
-    console.log(checked, text);
-    if (checked) {
-      handleSelect(text);
+  const handleCheckboxChange = () => {
+    const newValue = !isChecked;
+    const map = { id, children };
+    if (newValue) {
+      selectHeading(map);
     } else {
-      handleDeselect(text);
+      deselectHeading(map);
     }
   };
 
   return (
     <div className="flex items-start gap-2 mb-4">
-      {children && <ChevronRight
-        className={`cursor-pointer transform ${
-          isExpanded ? 'rotate-90' : ''
-        } mt-[11px]`}
-        onClick={() => setIsExpanded(!isExpanded)}
-        size={25}
-      />}
+      {children?.length > 0 && (
+        <ChevronRight
+          className={`cursor-pointer transform ${isExpanded ? 'rotate-90' : ''} mt-[11px]`}
+          onClick={() => setIsExpanded(!isExpanded)}
+          size={25}
+        />
+      )}
       <Card className="flex-1">
         <CardHeader className="flex items-center gap-2">
           <Checkbox
-            checked={isParentSelected}
+            checked={isChecked}
             onCheckedChange={handleCheckboxChange}
             className="rounded bg-gray-200"
           />
           <CardTitle className="text-lg font-semibold">{text}</CardTitle>
         </CardHeader>
-        {isExpanded && children && children.length > 0 && (
+        {isExpanded && children?.length > 0 && (
           <CardContent>
             {children.map((child, index) => (
               <Heading
                 key={index}
+                id={child.id}
                 text={child.text}
                 children={child.children}
-                ancestors={[...ancestors, { text, selected: isParentSelected }]}
-                handleSelect={handleSelect}
-                handleDeselect={handleDeselect}
+                selectHeading={selectHeading}
+                deselectHeading={deselectHeading}
+                isIdSelected={isIdSelected}
               />
             ))}
           </CardContent>
@@ -55,26 +64,60 @@ function Heading({ text, children, ancestors = [], handleSelect, handleDeselect 
   );
 }
 
+function generateIdsForHeadings(headings, parentId = null) {
+  return headings.map((node, index) => {
+    const newId = parentId ? `${parentId}.${index + 1}` : `${index + 1}`;
+    
+    return {
+      id: newId,
+      text: node.text,
+      children: node.children ? generateIdsForHeadings(node.children, newId) : [],
+    };
+  });
+}
+
 function App() {
   const [pageName, setPageName] = useState('');
   const [response, setResponse] = useState('');
   const [headings, setHeadings] = useState(null);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const [selectedHeadings, setSelectedHeadings] = useState([]);
-  const [deselectedHeadings, setDeselectedHeadings] = useState([]);
+  const [headingSelections, setHeadingSelections] = useState({
+    selections: new Set(),
+    deselections: new Set(),
+  });
 
-  const handleSelect = (heading) => {
-    setSelectedHeadings((prev) => [...prev, heading]);
-    setDeselectedHeadings((prev) => prev.filter((item) => item !== heading));
-  };
+  const getIdOfHeadingChildren = (heading) => {
+    const ids = [];
+    const traverse = (node) => {
+      ids.push(node.id);
+      node.children.forEach(traverse);
+    };
+    traverse(heading);
+    return ids;
+  }
 
-  const handleDeselect = (heading) => {
-    setDeselectedHeadings((prev) => [...prev, heading]);
-    setSelectedHeadings((prev) => prev.filter((item) => item !== heading));
-  };
+  const selectHeading = (id) => {
+    const ids = getIdOfHeadingChildren(id);
+    setHeadingSelections((prev) => ({
+      selections: new Set([...prev.selections, ...ids]),
+      deselections: new Set([...prev.deselections].filter(id => !ids.includes(id))),
+    }));
+  }
+
+  const deselectHeading = (id) => {
+    const ids = getIdOfHeadingChildren(id);
+    setHeadingSelections((prev) => ({
+      deselections: new Set([...prev.deselections, ...ids]), 
+      selections: new Set([...prev.selections].filter(id => !ids.includes(id)))
+    }));
+  }
+
+  const isIdSelected = (id) => {
+    return headingSelections.selections.has(id) && !headingSelections.deselections.has(id);
+  }
 
   const handleSubmit = async () => {
-    setIsButtonDisabled(true); // Disable the button
+    setIsButtonDisabled(true);
     try {
       const res = await fetch('http://localhost:3000/fetch-page', {
         method: 'POST',
@@ -84,7 +127,9 @@ function App() {
       const data = await res.json();
 
       if (data.success) {
-        setHeadings(data.headings);
+        const headingsWithId = generateIdsForHeadings(data.headings);
+        console.log(headingsWithId);
+        setHeadings(headingsWithId);
         setResponse('Page fetched successfully!');
       } else {
         setHeadings(null);
@@ -95,22 +140,11 @@ function App() {
       setResponse('Error fetching page');
       setHeadings(null);
     } finally {
-      setIsButtonDisabled(false); // Re-enable the button
+      setIsButtonDisabled(false);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      setIsButtonDisabled(true); // Disable the button
-      handleSubmit();
-    }
-  };
-
-  const onInputChange = (e) => {
-    setResponse('');
-    setPageName(e.target.value);
-  };
-
+  console.log(headingSelections);
   return (
     <div className="max-w-2xl mx-auto mt-12 text-center">
       <h1 className="text-3xl font-bold mb-6">Notion Recall</h1>
@@ -118,13 +152,16 @@ function App() {
         <Input
           placeholder="Enter page name"
           value={pageName}
-          onChange={onInputChange}
-          onKeyDown={handleKeyDown} // Listen for Enter key
+          onChange={(e) => {
+            setResponse('');
+            setPageName(e.target.value);
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           className="flex-1"
         />
         <Button
           onClick={handleSubmit}
-          disabled={isButtonDisabled} // Disable the button when necessary
+          disabled={isButtonDisabled}
           className={`px-4 py-2 text-white ${
             isButtonDisabled ? 'bg-black cursor-not-allowed' : 'bg-black hover:bg-gray-800 cursor-pointer'
           }`}
@@ -142,11 +179,12 @@ function App() {
             {headings.map((node, index) => (
               <Heading
                 key={index}
+                id={node.id}
                 text={node.text}
                 children={node.children}
-                ancestors={[]} // Top-level headings have no ancestors
-                handleSelect={handleSelect}
-                handleDeselect={handleDeselect}
+                selectHeading={selectHeading}
+                deselectHeading={deselectHeading}
+                isIdSelected={isIdSelected}
               />
             ))}
           </div>
