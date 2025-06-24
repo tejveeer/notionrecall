@@ -6,15 +6,99 @@ import { Checkbox } from '../components/ui/checkbox';
 import { ChevronRight } from 'lucide-react';
 
 export default function Home() {
-  const [pageName, setPageName] = useState('');
-  const [response, setResponse] = useState('');
   const [headings, setHeadings] = useState(null);
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [phase, setPhase] = useState(0);
   const [headingSelections, setHeadingSelections] = useState({
     selections: new Set(),
     deselections: new Set(),
   });
 
+  const getCurrentPhase = () => {
+    if (phase == 0) {
+      return <SearchPhase setHeadings={setHeadings} setHeadingSelections={setHeadingSelections} setPhase={setPhase} />;
+    } else if (phase == 1) {
+      return <SelectionPhase headings={headings} headingSelections={headingSelections} setHeadingSelections={setHeadingSelections} />;
+    }
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto mt-12 text-center">
+      <h1 className="flex text-3xl font-bold mb-6">Notion Recall</h1>
+      {getCurrentPhase()}
+    </div>
+  );
+}
+
+function SearchPhase({ setHeadings, setHeadingSelections, setPhase }) {
+  const [pageName, setPageName] = useState('');
+  const [response, setResponse] = useState('');
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsButtonDisabled(true);
+    setHeadings(null);
+    setHeadingSelections({
+      selections: new Set(),
+      deselections: new Set(),
+    });
+
+    try {
+      const res = await fetch('http://localhost:3000/fetch-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageName }),
+      });
+      console.log('made the request');
+      const data = await res.json();
+
+      if (data.success) {
+        setHeadings(data.headings);
+        setResponse('Page fetched successfully!');
+        setPhase((prev) => prev + 1);
+      } else {
+        setHeadings(null);
+        setResponse(data.message || 'Failed to fetch page');
+      }
+    } catch (error) {
+      console.error('Error fetching page:', error);
+      setResponse('Error fetching page');
+      setHeadings(null);
+    } finally {
+      setIsButtonDisabled(false);
+    }
+  };
+
+
+  return <>
+    <div className="flex gap-4 mb-6">
+      <Input
+        placeholder="Enter page name"
+        value={pageName}
+        onChange={(e) => {
+          setResponse('');
+          setPageName(e.target.value);
+        }}
+        onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+        className="flex-1"
+      />
+      <Button
+        onClick={handleSubmit}
+        disabled={isButtonDisabled}
+        className={`px-4 py-2 text-white ${
+          isButtonDisabled ? 'bg-black cursor-not-allowed' : 'bg-black hover:bg-gray-800 cursor-pointer'
+        }`}
+      >
+        Fetch Page
+      </Button>
+    </div>
+    <div className="mb-6">
+      <strong>Response:</strong>
+      <p>{response}</p>
+    </div>
+  </>;
+}
+
+function SelectionPhase({ headings, headingSelections, setHeadingSelections }) {
   const getIdOfHeadingChildren = (heading) => {
     const ids = [];
     const traverse = (node) => {
@@ -45,38 +129,6 @@ export default function Home() {
     return headingSelections.selections.has(id) && !headingSelections.deselections.has(id);
   }
 
-  const handleSubmit = async () => {
-    setIsButtonDisabled(true);
-    setHeadings(null);
-    setHeadingSelections({
-      selections: new Set(),
-      deselections: new Set(),
-    });
-
-    try {
-      const res = await fetch('http://localhost:3000/fetch-page', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageName }),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        setHeadings(data.headings);
-        setResponse('Page fetched successfully!');
-      } else {
-        setHeadings(null);
-        setResponse(data.message || 'Failed to fetch page');
-      }
-    } catch (error) {
-      console.error('Error fetching page:', error);
-      setResponse('Error fetching page');
-      setHeadings(null);
-    } finally {
-      setIsButtonDisabled(false);
-    }
-  };
-
   const handleSelectedHeadingSubmission = async () => {
     const { selections, deselections } = headingSelections;
     const sanitized = sanitizeHeadingSelections(selections, deselections);
@@ -102,61 +154,33 @@ export default function Home() {
     }
   };
 
-  return (
-    <div className="max-w-2xl mx-auto mt-12 text-center">
-      <h1 className="text-3xl font-bold mb-6">Notion Recall</h1>
-      <div className="flex gap-4 mb-6">
-        <Input
-          placeholder="Enter page name"
-          value={pageName}
-          onChange={(e) => {
-            setResponse('');
-            setPageName(e.target.value);
-          }}
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          className="flex-1"
-        />
-        <Button
-          onClick={handleSubmit}
-          disabled={isButtonDisabled}
-          className={`px-4 py-2 text-white ${
-            isButtonDisabled ? 'bg-black cursor-not-allowed' : 'bg-black hover:bg-gray-800 cursor-pointer'
-          }`}
-        >
-          Fetch Page
-        </Button>
-      </div>
-      <div className="flex gap-4 mb-6">
-        <Button
-          onClick={handleSelectedHeadingSubmission}
-          className="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 cursor-pointer"
-        >
-          Submit
-        </Button>
-      </div>
-      <div className="mb-6">
-        <strong>Response:</strong>
-        <p>{response}</p>
-      </div>
-      {headings && (
-        <div>
-          <div className="mt-4">
-            {headings.map((node, index) => (
-              <Heading
-                key={index}
-                id={node.id}
-                text={node.text}
-                children={node.children}
-                selectHeading={selectHeading}
-                deselectHeading={deselectHeading}
-                isIdSelected={isIdSelected}
-              />
-            ))}
-          </div>
+  return <>
+    {headings && (
+      <div>
+        <div className="mt-4">
+          {headings.map((node, index) => (
+            <Heading
+              key={index}
+              id={node.id}
+              text={node.text}
+              children={node.children}
+              selectHeading={selectHeading}
+              deselectHeading={deselectHeading}
+              isIdSelected={isIdSelected}
+            />
+          ))}
         </div>
-      )}
+      </div>
+    )}
+    <div className="flex gap-4 mb-6">
+      <Button
+        onClick={handleSelectedHeadingSubmission}
+        className="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 cursor-pointer"
+      >
+        Submit
+      </Button>
     </div>
-  );
+  </>
 }
 
 function Heading({

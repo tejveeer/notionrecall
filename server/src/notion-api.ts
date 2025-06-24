@@ -109,7 +109,7 @@ export class NotionAPI {
     const blocks = await this.fetchPageContent(pageId);
     this.blockMap = new Map(blocks.map(block => [block.id, block]));
     this.allBlocks = blocks;
-    
+
     const headingNodes: HeadingNode[] = [];
     const stack: { node: HeadingNode; level: number }[] = [];
 
@@ -204,8 +204,8 @@ export class NotionAPI {
       }
 
       // Add content for non-heading blocks
-      const blockText = this._extractBlockText(block);
-      if (blockText) content += blockText + '\n\n';
+      const blockText = await this.getBlockContent(block);
+      if (blockText) content += blockText + '\n';
     }
 
     // Process children recursively
@@ -219,6 +219,21 @@ export class NotionAPI {
   private collectHeadingIds(node: HeadingNode, idSet: Set<string>) {
     idSet.add(node.id);
     node.children.forEach(child => this.collectHeadingIds(child, idSet));
+  }
+
+  // Given a block, gets all the block content recursively if it's a full block
+  private async getBlockContent(block: any, level: number = 0): Promise<string> {
+    if (!isFullBlock(block)) return "";
+
+    let content = this._extractBlockText(block);
+    if (block.has_children) {
+      const children = await this.fetchPageContent(block.id);
+      for (const child of children) {
+        const childContent = await this.getBlockContent(child, level + 1);
+        content += `\n${'  '.repeat(level + 1)}${childContent}`;
+      }
+    }
+    return content;
   }
 
   private async fetchPageContent(pageId: string): Promise<any[]> {
