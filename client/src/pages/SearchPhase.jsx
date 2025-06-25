@@ -1,6 +1,12 @@
+import { useState } from "react";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
 
-
-function SearchPhase({ setHeadings, setHeadingSelections, setPhase }) {
+export default function SearchPhase({
+  setHeadings,
+  setHeadingSelections,
+  setPhase,
+}) {
   const [pageName, setPageName] = useState("");
   const [response, setResponse] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
@@ -55,7 +61,7 @@ function SearchPhase({ setHeadings, setHeadingSelections, setPhase }) {
         <Button
           onClick={handleSubmit}
           disabled={isButtonDisabled}
-          className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
+          className={`px-4 py-2 cursor-pointer rounded-lg transition-colors duration-200 ${
             isButtonDisabled
               ? "bg-white/20 cursor-not-allowed text-white/50"
               : "bg-white/20 hover:bg-white/30 text-white border border-white/30"
