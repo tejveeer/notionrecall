@@ -2,6 +2,7 @@ import { useState } from "react";
 import SearchPhase from "./SearchPhase";
 import SelectionPhase from "./SelectionPhase";
 import { CardHeader, Card } from "@/components/ui/card";
+import QuizSettingPhase from "./QuizSettingPhase";
 
 export default function Home() {
   const [headings, setHeadings] = useState(null);
@@ -28,6 +29,8 @@ export default function Home() {
           setHeadingSelections={setHeadingSelections}
         />
       );
+    } else if (phase == 2) {
+      return <QuizSettingPhase />;
     }
   };
 
@@ -39,7 +42,7 @@ export default function Home() {
         </h1>
         {getCurrentPhase()}
       </div>
-      <div className="mt-6 h-15 px-4 max-w-2xl w-full flex justify-between">
+      <div className="mt-15 h-15 px-4 max-w-2xl w-full flex justify-between">
         <Card
           className="bg-blue-500/20 w-30 mr-0 backdrop-blur-md border border-blue-400/30 rounded-lg p-4 cursor-pointer hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
           onClick={() => setPhase((prev) => Math.max(prev - 1, 0))}

@@ -14,6 +14,66 @@ export default function SelectionPhase({
   headingSelections,
   setHeadingSelections,
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const initializeExpansionStatus = (headings) => {
+    const status = {};
+    const traverse = (node) => {
+      status[node.id] = false;
+      node.children.forEach(traverse);
+    };
+    headings.forEach(traverse);
+    return status;
+  };
+
+  const initialExpansionStatus = initializeExpansionStatus(headings);
+  const [headingExpansionStatus, setHeadingExpansionStatus] = useState(
+    initialExpansionStatus,
+  );
+
+  const setHeadingExpansion = (id, isExpanded) => {
+    const findParentId = (id) => id.split(".").slice(0, -1).join(".");
+    const findSiblings = (parentId) => {
+      const parent = headings.find((node) => node.id === parentId);
+      return parent ? parent.children.map((child) => child.id) : [];
+    };
+
+    if (isExpanded) {
+      const newStatus = { ...initialExpansionStatus };
+      newStatus[id] = true;
+
+      const parentId = findParentId(id);
+      if (parentId) {
+        newStatus[parentId] = true; // Keep the parent expanded
+        const siblings = findSiblings(parentId);
+        siblings.forEach((siblingId) => {
+          if (siblingId !== id) newStatus[siblingId] = false; // Close siblings
+        });
+      } else {
+        // If no parent, handle as a top-level element
+        const immediateChildren =
+          headings.find((node) => node.id === id)?.children || [];
+        immediateChildren.forEach((child) => {
+          newStatus[child.id] = false; // Close all children
+        });
+      }
+
+      setHeadingExpansionStatus(newStatus);
+    } else {
+      const newStatus = { ...initialExpansionStatus };
+      newStatus[id] = false;
+
+      const parentId = findParentId(id);
+      if (parentId) {
+        const siblings = findSiblings(parentId);
+        siblings.forEach((siblingId) => {
+          newStatus[siblingId] = false; // Close siblings
+        });
+      }
+
+      setHeadingExpansionStatus(newStatus);
+    }
+  };
+
   const getIdOfHeadingChildren = (heading) => {
     const ids = [];
     const traverse = (node) => {
@@ -52,6 +112,9 @@ export default function SelectionPhase({
   };
 
   const handleSelectedHeadingSubmission = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     const { selections, deselections } = headingSelections;
     const sanitized = sanitizeHeadingSelections(selections, deselections);
 
@@ -73,11 +136,19 @@ export default function SelectionPhase({
       }
     } catch (error) {
       console.error("Error fetching content:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !isSubmitting) {
+      handleSelectedHeadingSubmission();
     }
   };
 
   return (
-    <>
+    <div onKeyDown={handleKeyDown} tabIndex={-1}>
       {headings && (
         <div className="mb-6">
           <div className="space-y-4">
@@ -90,6 +161,12 @@ export default function SelectionPhase({
                 selectHeading={selectHeading}
                 deselectHeading={deselectHeading}
                 isIdSelected={isIdSelected}
+                headingExpansionStatus={headingExpansionStatus}
+                isExpanded={headingExpansionStatus[node.id]}
+                setHeadingExpansion={setHeadingExpansion}
+                setIsExpanded={(isExpanded) =>
+                  setHeadingExpansion(node.id, isExpanded)
+                }
               />
             ))}
           </div>
@@ -98,12 +175,17 @@ export default function SelectionPhase({
       <div className="flex justify-center">
         <Button
           onClick={handleSelectedHeadingSubmission}
-          className="px-6 py-2 bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-lg transition-colors duration-200"
+          disabled={isSubmitting}
+          className={`px-6 py-2 rounded-lg transition-colors duration-200 ${
+            isSubmitting
+              ? "bg-white/10 cursor-not-allowed text-white/50 border border-white/20"
+              : "bg-white/20 hover:bg-white/30 text-white border border-white/30"
+          }`}
         >
-          Submit Selected
+          {isSubmitting ? "Fetching..." : "Submit Selected"}
         </Button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -113,9 +195,12 @@ function Heading({
   children,
   selectHeading,
   deselectHeading,
+  setIsExpanded,
+  headingExpansionStatus,
+  setHeadingExpansion,
   isIdSelected,
+  isExpanded,
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const isChecked = isIdSelected(id);
 
   const handleCheckboxChange = () => {
@@ -136,7 +221,7 @@ function Heading({
           className="flex-shrink-0 p-1 hover:bg-white/10 rounded transition-colors mt-4.5 text-white/70 hover:text-white"
         >
           <ChevronRight
-            className={`transformtransition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+            className={`transform transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
             size={25}
           />
         </button>
@@ -164,6 +249,12 @@ function Heading({
                   selectHeading={selectHeading}
                   deselectHeading={deselectHeading}
                   isIdSelected={isIdSelected}
+                  headingExpansionStatus={headingExpansionStatus}
+                  setHeadingExpansion={setHeadingExpansion}
+                  isExpanded={headingExpansionStatus[child.id]}
+                  setIsExpanded={(isExpanded) =>
+                    setHeadingExpansion(child.id, isExpanded)
+                  }
                 />
               ))}
             </div>
