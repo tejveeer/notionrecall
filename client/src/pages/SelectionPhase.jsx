@@ -178,8 +178,8 @@ export default function SelectionPhase({
           disabled={isSubmitting}
           className={`px-6 py-2 rounded-lg transition-colors duration-200 ${
             isSubmitting
-              ? "bg-white/10 cursor-not-allowed text-white/50 border border-white/20"
-              : "bg-white/20 hover:bg-white/30 text-white border border-white/30"
+              ? "bg-yellow-500/10 cursor-not-allowed text-yellow-200/50 border border-yellow-400/20"
+              : "bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 border border-yellow-400/30"
           }`}
         >
           {isSubmitting ? "Fetching..." : "Submit Selected"}
@@ -226,20 +226,20 @@ function Heading({
           />
         </button>
       )}
-      <Card className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-colors duration-200">
+      <Card className="flex-1 bg-yellow-500/10 backdrop-blur-md border border-yellow-400/20 hover:bg-yellow-500/15 transition-colors duration-200">
         <CardHeader className="flex flex-row items-center gap-3 space-y-0 p-4">
           <Checkbox
             checked={isChecked}
             onCheckedChange={handleCheckboxChange}
-            className="rounded border-white/30 data-[state=checked]:bg-white/20 data-[state=checked]:border-white/50"
+            className="rounded border-yellow-400/30 data-[state=checked]:bg-yellow-500/20 data-[state=checked]:border-yellow-400/50"
           />
-          <CardTitle className="text-lg font-medium text-white flex-1">
+          <CardTitle className="text-lg font-medium text-yellow-100 flex-1">
             {text}
           </CardTitle>
         </CardHeader>
         {isExpanded && children?.length > 0 && (
           <CardContent className="pt-0 pb-4 px-4">
-            <div className="pl-4 border-l-2 border-white/20 space-y-3">
+            <div className="pl-4 border-l-2 border-yellow-400/20 space-y-3">
               {children.map((child, index) => (
                 <Heading
                   key={index}

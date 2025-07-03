@@ -3,6 +3,7 @@ import SearchPhase from "./SearchPhase";
 import SelectionPhase from "./SelectionPhase";
 import { CardHeader, Card } from "@/components/ui/card";
 import QuizSettingPhase from "./QuizSettingPhase";
+import Navbar from "../components/Navbar";
 
 export default function Home() {
   const [headings, setHeadings] = useState(null);
@@ -35,30 +36,36 @@ export default function Home() {
   };
 
   return (
-    <div className="flex text-white flex-col justify-center items-center min-h-screen w-full">
-      <div className="max-w-2xl w-full flex flex-col mt-12 px-4">
-        <h1 className="flex text-3xl font-bold text-white mb-4">
-          Notion Recall
-        </h1>
-        {getCurrentPhase()}
-      </div>
-      <div className="mt-15 h-15 px-4 max-w-2xl w-full flex justify-between">
-        <Card
-          className="bg-blue-500/20 w-30 mr-0 backdrop-blur-md border border-blue-400/30 rounded-lg p-4 cursor-pointer hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
-          onClick={() => setPhase((prev) => Math.max(prev - 1, 0))}
-        >
-          <CardHeader className="text-center text-blue-200 sm:px-0 font-semibold">
-            Previous
-          </CardHeader>
-        </Card>
-        <Card
-          className="bg-blue-500/20 w-30 mr-0 backdrop-blur-md border border-blue-400/30 rounded-lg p-4 cursor-pointer hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
-          onClick={() => setPhase((prev) => prev + 1)}
-        >
-          <CardHeader className="text-center text-blue-200 sm:px-0 font-semibold">
-            Next
-          </CardHeader>
-        </Card>
+    <div className="flex justify-center items-center min-h-screen w-full px-4">
+      <div className="max-w-2xl w-full">
+        <div className="grid grid-rows-[auto_1fr_auto] min-h-screen gap-6 py-4">
+          {/* Navbar */}
+          <div className="pt-1">
+            <Navbar />
+          </div>
+
+          {/* Main Content */}
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-full">{getCurrentPhase()}</div>
+          </div>
+
+          {/* Phase Navigation */}
+          <div className="pb-1 flex justify-between">
+            <button
+              onClick={() => setPhase((prev) => Math.max(prev - 1, 0))}
+              className="bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-lg px-4 py-3 cursor-pointer hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 text-blue-200 font-semibold text-sm text-center w-[calc(50%-0.5rem)]"
+            >
+              ← Previous
+            </button>
+
+            <button
+              onClick={() => setPhase((prev) => prev + 1)}
+              className="bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-lg px-4 py-3 cursor-pointer hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 text-blue-200 font-semibold text-sm text-center w-[calc(50%-0.5rem)]"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -46,7 +46,7 @@ export default function SearchPhase({
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 mb-6">
+    <div className="bg-yellow-500/10 backdrop-blur-md border border-yellow-400/20 rounded-2xl p-6 mb-6">
       <div className="flex flex-col sm:flex-row gap-4">
         <Input
           placeholder="Enter page name"
@@ -56,25 +56,25 @@ export default function SearchPhase({
             setPageName(e.target.value);
           }}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus:border-white/50"
+          className="flex-1 bg-yellow-500/10 border-yellow-400/30 text-yellow-100 placeholder:text-yellow-200/50 focus:border-yellow-400/50"
         />
         <Button
           onClick={handleSubmit}
           disabled={isButtonDisabled}
           className={`px-4 py-2 cursor-pointer rounded-lg transition-colors duration-200 ${
             isButtonDisabled
-              ? "bg-white/20 cursor-not-allowed text-white/50"
-              : "bg-white/20 hover:bg-white/30 text-white border border-white/30"
+              ? "bg-yellow-500/20 cursor-not-allowed text-yellow-200/50"
+              : "bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 border border-yellow-400/30"
           }`}
         >
           {isButtonDisabled ? "Fetching..." : "Fetch Page"}
         </Button>
       </div>
       {response && (
-        <div className="p-4 mt-6 bg-white/10 border border-white/20 rounded-xl">
-          <p className="text-white">
-            <span className="font-semibold text-white/90">Response:</span>{" "}
-            <span className="text-white/80">{response}</span>
+        <div className="p-4 mt-6 bg-yellow-500/10 border border-yellow-400/20 rounded-xl">
+          <p className="text-yellow-100">
+            <span className="font-semibold text-yellow-100/90">Response:</span>{" "}
+            <span className="text-yellow-100/80">{response}</span>
           </p>
         </div>
       )}
