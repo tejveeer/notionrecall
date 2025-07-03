@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 export default function SearchPhase({
   setHeadings,
   setHeadingSelections,
-  setPhase,
+  nextPhase,
 }) {
   const [pageName, setPageName] = useState("");
   const [response, setResponse] = useState("");
@@ -31,7 +31,7 @@ export default function SearchPhase({
       if (data.success) {
         setHeadings(data.headings);
         setResponse("Page fetched successfully!");
-        setPhase((prev) => prev + 1);
+        nextPhase();
       } else {
         setHeadings(null);
         setResponse(data.message || "Failed to fetch page");
