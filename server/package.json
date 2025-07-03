@@ -13,6 +13,7 @@
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
     "@types/node": "^22.15.3",
+    "@types/pg": "^8.15.4",
     "@types/prompt-sync": "^4.2.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
@@ -22,6 +23,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "prompt-sync": "^4.2.0"
+    "pg": "^8.16.3",
+    "prompt-sync": "^4.2.0",
+    "uuid": "^11.1.0"
   }
 }

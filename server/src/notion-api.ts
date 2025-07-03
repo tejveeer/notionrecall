@@ -23,8 +23,8 @@ export class NotionAPI {
   private readonly notion: Client;
   private currentPageId: string | null = null;
   private headingHierarchy: HeadingNode[] = [];
-  private blockMap: Map<string, any> = new Map(); // Stores all blocks by ID
   private allBlocks: any[] = [];
+  public headingContent: string = '';
 
   constructor(config: NotionRecallConfig) {
     this.notion = new Client({ auth: config.notionToken });
@@ -102,12 +102,12 @@ export class NotionAPI {
       content += await this.getHeadingContent(node);
     }
 
+    this.headingContent = content;
     return content;
   }
 
   private async buildHeadingHierarchy(pageId: string): Promise<void> {
     const blocks = await this.fetchPageContent(pageId);
-    this.blockMap = new Map(blocks.map(block => [block.id, block]));
     this.allBlocks = blocks;
 
     const headingNodes: HeadingNode[] = [];

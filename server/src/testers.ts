@@ -17,24 +17,24 @@ interface FillInBlank extends BaseQuestion {
     answer: string[];
 }
 
-interface ShortAnswer extends BaseQuestion {}
-interface Explanation extends BaseQuestion {}
-
-type Question = MultipleChoice | TrueFalse | FillInBlank | ShortAnswer | Explanation;
+type Question = MultipleChoice | TrueFalse | FillInBlank;
 
 abstract class TesterABC {
     abstract questionStructure: string;
-    
-    private currentQuestion: number = 0;
-    protected testingQuestions: Question[] | null = null;
 
-    public constructor(protected chatbotHandler: DeepseekAPI, protected content: string) {}
+    protected chatbotHandler: DeepseekAPI;
+    protected content: string;
+
+    constructor(chatbotHandler: DeepseekAPI, content: string) {
+        this.chatbotHandler = chatbotHandler;
+        this.content = content;
+    }
 
     public async getQuestions(amountOfQuestions: number): Promise<Question[]> {
         if (amountOfQuestions <= 0) {
             throw new Error("Amount of questions must be positive");
         }
-    
+
         try {
             const context = `
             This is the structure of a single question: ${this.questionStructure}\n\n
@@ -44,9 +44,8 @@ abstract class TesterABC {
             const response = await this.chatbotHandler.sendToDeepseek(context, this.content);
             const jsonString = this.extractJson(response);
             const parsedQuestions = this.validateQuestions(JSON.parse(jsonString), amountOfQuestions);
-    
-            console.log(`Number of questions: ${parsedQuestions.length}`)
-            this.testingQuestions = parsedQuestions;
+
+            console.log(`Number of questions: ${parsedQuestions.length}`);
             return parsedQuestions;
         } catch (error) {
             console.error("Question generation failed:", error);
@@ -54,48 +53,31 @@ abstract class TesterABC {
         }
     }
 
-    public getCurrentQuestion(): Question | null {
-        const res = this.testingQuestions?.[this.currentQuestion] ?? null;
-        if (res == null) {
-            return null;
-        }
-
-        this.currentQuestion++;
-        return res;
-    }
-
-    public hasQuestion(): boolean {
-        if (!this.testingQuestions || this.currentQuestion >= this.testingQuestions.length) {
-            return false;
-        }
-        return true;
-    }
-    
     // Helper methods
     private extractJson(response: string): string {
         // Handle both ```json ``` and plain JSON responses
         const jsonMatch = response.match(/```(?:json)?\n([\s\S]*?)\n```/)?.[1] ?? response;
         return jsonMatch.trim();
     }
-    
+
     private validateQuestions(candidates: unknown[], expectedCount: number): Question[] {
         if (!Array.isArray(candidates)) {
             throw new Error("Expected an array of questions");
         }
-    
+
         return candidates.slice(0, expectedCount).map((candidate, index) => {
             if (typeof candidate !== "object" || candidate === null) {
                 throw new Error(`Question at index ${index} is not an object`);
             }
-    
+
             // Type-safe validation with proper type narrowing
             const question = candidate as Record<string, unknown>;
-    
+
             // First validate the base question property
             if (typeof question.question !== "string") {
                 throw new Error(`Question at index ${index} has invalid 'question' field`);
             }
-    
+
             // Multiple Choice validation
             if ("options" in question && "answer" in question) {
                 if (!Array.isArray(question.options)) {
@@ -110,7 +92,7 @@ abstract class TesterABC {
                     answer: question.answer as string
                 } satisfies MultipleChoice;
             }
-    
+
             // True/False validation
             if ("answer" in question && typeof question.answer === "boolean") {
                 return {
@@ -118,7 +100,7 @@ abstract class TesterABC {
                     answer: question.answer
                 } satisfies TrueFalse;
             }
-    
+
             // Fill in Blank validation
             if ("answer" in question && Array.isArray(question.answer)) {
                 return {
@@ -126,11 +108,8 @@ abstract class TesterABC {
                     answer: question.answer as string[]
                 } satisfies FillInBlank;
             }
-    
-            // Short Answer/Explanation (only requires question)
-            return {
-                question: question.question
-            } satisfies ShortAnswer | Explanation;
+
+            throw new Error(`Question at index ${index} does not match any valid type`);
         });
     }
 }
@@ -158,21 +137,9 @@ class FillInBlankTester extends TesterABC {
     `;
 }
 
-class ShortAnswerTester extends TesterABC {
-    questionStructure = `
-    - question: string
-    `;
-}
-
-class ExplanationTester extends TesterABC {
-    questionStructure = `
-    - question: string (should start with "Explain..." or "Describe...")
-    `;
-}
-
 // Factory function for convenience
 export function createTester(
-    type: 'mc' | 'tf' | 'fib' | 'sa' | 'exp',
+    type: 'mc' | 'tf' | 'fib',
     chatbotHandler: DeepseekAPI,
     content: string
 ): TesterABC {
@@ -180,8 +147,6 @@ export function createTester(
         case 'mc': return new MultipleChoiceTester(chatbotHandler, content);
         case 'tf': return new TrueFalseTester(chatbotHandler, content);
         case 'fib': return new FillInBlankTester(chatbotHandler, content);
-        case 'sa': return new ShortAnswerTester(chatbotHandler, content);
-        case 'exp': return new ExplanationTester(chatbotHandler, content);
         default: throw new Error("Invalid tester type");
     }
 }
