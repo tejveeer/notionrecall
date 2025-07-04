@@ -1,22 +1,17 @@
 import { useState } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Checkbox } from "../components/ui/checkbox";
 
-export default function QuizSettingPhase() {
-  const [quizType, setQuizType] = useState("multiple-choice");
+export default function QuizSettingPhase({ nextPhase, setQuizData }) {
+  const [quizType, setQuizType] = useState("mc");
   const [numberOfQuestions, setNumberOfQuestions] = useState(5);
   const [freestyle, setFreestyle] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const quizTypes = [
-    { value: "multiple-choice", label: "Multiple Choice" },
-    { value: "true-false", label: "True/False" },
-    { value: "fill-blank", label: "Fill in the Blank" },
+    { value: "mc", label: "Multiple Choice" },
+    { value: "tf", label: "True/False" },
+    { value: "fib", label: "Fill in the Blank" },
   ];
 
   const handleNumberChange = (increment) => {
@@ -24,6 +19,44 @@ export default function QuizSettingPhase() {
       const newValue = prev + increment;
       return Math.min(Math.max(newValue, 5), 10);
     });
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    const quizSettings = {
+      quizType,
+      numberOfQuestions,
+      freestyle,
+    };
+
+    try {
+      const response = await fetch("http://localhost:3000/get-questions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(quizSettings),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        nextPhase(3);
+        setQuizData({
+          questions: data.questions,
+          quizType: quizType,
+        });
+      } else {
+        console.log("Failed to get quiz questions");
+      }
+    } catch (error) {
+      console.error("Error submitting quiz settings:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -43,7 +76,7 @@ export default function QuizSettingPhase() {
               <button
                 key={type.value}
                 onClick={() => setQuizType(type.value)}
-                className={`p-3 rounded-lg border transition-all duration-200 text-sm font-medium ${
+                className={`p-3 cursor-pointer rounded-lg border transition-all duration-200 text-sm font-medium ${
                   quizType === type.value
                     ? "bg-amber-400/20 border-amber-300/50 text-amber-100"
                     : "bg-amber-500/5 border-amber-400/20 text-amber-200/70 hover:bg-amber-400/10 hover:border-amber-300/30"
@@ -67,7 +100,7 @@ export default function QuizSettingPhase() {
               className={`w-10 h-10 rounded-lg border transition-all duration-200 font-bold ${
                 numberOfQuestions <= 5
                   ? "bg-amber-500/5 border-amber-400/20 text-amber-200/30 cursor-not-allowed"
-                  : "bg-amber-400/10 border-amber-300/30 text-amber-200 hover:bg-amber-400/20 hover:border-amber-300/50"
+                  : "bg-amber-400/10 cursor-pointer border-amber-300/30 text-amber-200 hover:bg-amber-400/20 hover:border-amber-300/50"
               }`}
             >
               −
@@ -85,7 +118,7 @@ export default function QuizSettingPhase() {
               className={`w-10 h-10 rounded-lg border transition-all duration-200 font-bold ${
                 numberOfQuestions >= 10
                   ? "bg-amber-500/5 border-amber-400/20 text-amber-200/30 cursor-not-allowed"
-                  : "bg-amber-400/10 border-amber-300/30 text-amber-200 hover:bg-amber-400/20 hover:border-amber-300/50"
+                  : "bg-amber-400/10 cursor-pointer border-amber-300/30 text-amber-200 hover:bg-amber-400/20 hover:border-amber-300/50"
               }`}
             >
               +
@@ -103,7 +136,7 @@ export default function QuizSettingPhase() {
             <Checkbox
               checked={freestyle}
               onCheckedChange={setFreestyle}
-              className="rounded border-amber-300/30 data-[state=checked]:bg-amber-400/20 data-[state=checked]:border-amber-300/50"
+              className="rounded cursor-pointer border-amber-300/30 data-[state=checked]:bg-amber-400/20 data-[state=checked]:border-amber-300/50"
             />
             <div>
               <span className="text-amber-200 font-medium">Freestyle Mode</span>
@@ -131,6 +164,21 @@ export default function QuizSettingPhase() {
               {freestyle ? "Enabled" : "Disabled"}
             </p>
           </div>
+        </div>
+
+        {/* Submit Button */}
+        <div className="flex justify-center mt-6">
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
+              isSubmitting
+                ? "bg-amber-500/20 cursor-not-allowed text-amber-200/50 border border-amber-400/20"
+                : "bg-amber-500/30 hover:bg-amber-500/40 text-amber-100 border border-amber-400/40 hover:border-amber-400/60"
+            }`}
+          >
+            {isSubmitting ? "Creating Quiz..." : "Create Quiz"}
+          </Button>
         </div>
       </div>
     </div>

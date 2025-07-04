@@ -64,15 +64,15 @@ app.post('/get-heading-content', async (req: any, res: any) => {
 
 // Endpoint to fetch questions
 app.post('/get-questions', async (req: any, res: any) => {
-  const { testType, amount, freestyle } = req.body;
+  const { quizType, numberOfQuestions, freestyle } = req.body;
 
-  if (!testType || !amount || freestyle === undefined) {
+  if (!quizType || !numberOfQuestions || freestyle === undefined) {
     return res.status(400).json({ error: 'testType, amount, and freestyle are required' });
   }
 
   try {
-    const tester = createTester(testType, depi, nopi.headingContent);
-    const questions = await tester.getQuestions(amount);
+    const tester = createTester(quizType, depi, nopi.headingContent);
+    const questions = await tester.getQuestions(numberOfQuestions);
     return res.json({ success: true, questions });
   } catch (error) {
     console.error('Error generating questions:', error);

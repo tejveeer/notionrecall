@@ -6,12 +6,14 @@ export default function SearchPhase({
   setHeadings,
   setHeadingSelections,
   nextPhase,
+  resetPhase,
 }) {
   const [pageName, setPageName] = useState("");
   const [response, setResponse] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
   const handleSubmit = async () => {
+    resetPhase(0);
     setIsButtonDisabled(true);
     setHeadings(null);
     setHeadingSelections({
@@ -31,7 +33,7 @@ export default function SearchPhase({
       if (data.success) {
         setHeadings(data.headings);
         setResponse("Page fetched successfully!");
-        nextPhase();
+        nextPhase(1);
       } else {
         setHeadings(null);
         setResponse(data.message || "Failed to fetch page");

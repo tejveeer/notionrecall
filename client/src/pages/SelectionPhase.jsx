@@ -13,6 +13,8 @@ export default function SelectionPhase({
   headings,
   headingSelections,
   setHeadingSelections,
+  nextPhase,
+  resetPhase,
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const initializeExpansionStatus = (headings) => {
@@ -115,6 +117,7 @@ export default function SelectionPhase({
     if (isSubmitting) return;
 
     setIsSubmitting(true);
+    resetPhase(1);
     const { selections, deselections } = headingSelections;
     const sanitized = sanitizeHeadingSelections(selections, deselections);
 
@@ -131,6 +134,7 @@ export default function SelectionPhase({
 
       if (data.success) {
         console.log(data.content);
+        nextPhase(2);
       } else {
         console.log("Unsuccessful fetch");
       }

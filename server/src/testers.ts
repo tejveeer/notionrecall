@@ -1,20 +1,20 @@
 import { DeepseekAPI } from "./deepseek-api";
 
 interface BaseQuestion {
-    question: string;
+  question: string;
 }
 
 interface MultipleChoice extends BaseQuestion {
-    options: string[];
-    answer: string;  // Must exist in options
+  options: string[];
+  answer: string;  // Must exist in options
 }
 
 interface TrueFalse extends BaseQuestion {
-    answer: boolean;
+  answer: boolean;
 }
 
 interface FillInBlank extends BaseQuestion {
-    answer: string[];
+  answer: string[];
 }
 
 type Question = MultipleChoice | TrueFalse | FillInBlank;
