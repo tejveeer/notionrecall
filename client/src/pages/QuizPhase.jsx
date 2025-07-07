@@ -1,11 +1,4 @@
 import { useState } from "react";
-import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../components/ui/card";
 
 // Main Quiz Component
 export default function Quiz({ questions, quizType }) {
@@ -22,7 +15,7 @@ export default function Quiz({ questions, quizType }) {
 
   if (isQuizComplete) {
     return (
-      <div className="bg-yellow-500/10 backdrop-blur-md border border-yellow-400/20 rounded-2xl p-6 text-center">
+      <div className="bg-yellow-500/10 backdrop-blur-md border border-yellow-400/20 rounded-2xl p-8 text-center">
         <h2 className="text-2xl font-bold text-yellow-100 mb-4">
           Quiz Complete!
         </h2>
@@ -68,23 +61,28 @@ export default function Quiz({ questions, quizType }) {
   };
 
   return (
-    <div className="bg-yellow-500/10 backdrop-blur-md border border-yellow-400/20 rounded-2xl p-6">
-      <div className="mb-4">
-        <div className="flex justify-between items-center mb-2">
+    <div className="bg-yellow-500/10 backdrop-blur-md border border-yellow-400/20 rounded-2xl p-8">
+      {/* Quiz Header */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-3">
           <h2 className="text-xl font-semibold text-yellow-100">Quiz</h2>
           <span className="text-yellow-200/70 text-sm">
             Question {currentQuestionIndex + 1} of {questions.length}
           </span>
         </div>
-        <div className="w-full bg-yellow-500/20 rounded-full h-2">
+
+        {/* Progress Bar */}
+        <div className="w-full bg-yellow-500/20 rounded-full h-3">
           <div
-            className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+            className="bg-yellow-400 h-3 rounded-full transition-all duration-300"
             style={{
               width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
             }}
           ></div>
         </div>
       </div>
+
+      {/* Question */}
       {renderQuestion()}
     </div>
   );
@@ -110,20 +108,21 @@ function MCQuestion({ question, onNext, questionNumber, totalQuestions }) {
   };
 
   return (
-    <Card className="bg-blue-500/10 backdrop-blur-md border border-blue-400/20">
-      <CardHeader>
-        <CardTitle className="text-lg text-blue-100">
+    <div>
+      {/* Question */}
+      <div className="mb-5">
+        <h3 className="text-lg font-medium text-white mb-5">
           {question.question}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </h3>
+
+        {/* Options */}
         <div className="space-y-3">
           {question.options.map((option, index) => (
             <button
               key={index}
               onClick={() => !isSubmitted && setSelectedOption(option)}
               disabled={isSubmitted}
-              className={`w-full p-3 text-left rounded-lg border transition-all duration-200 ${
+              className={`w-full p-4 text-left rounded-lg border transition-all duration-200 ${
                 showResult
                   ? option === question.answer
                     ? "bg-green-500/20 border-green-400/50 text-green-100"
@@ -139,33 +138,34 @@ function MCQuestion({ question, onNext, questionNumber, totalQuestions }) {
             </button>
           ))}
         </div>
+      </div>
 
-        <div className="flex justify-center pt-4">
-          {!isSubmitted ? (
-            <Button
-              onClick={handleSubmit}
-              disabled={!selectedOption}
-              className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
-                selectedOption
-                  ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40"
-                  : "bg-blue-500/10 cursor-not-allowed text-blue-200/50 border border-blue-400/20"
-              }`}
-            >
-              Submit
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              className="px-6 py-2 bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200"
-            >
-              {questionNumber === totalQuestions
-                ? "Finish Quiz"
-                : "Next Question"}
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      {/* Submit/Next Button */}
+      <div className="flex justify-center">
+        {!isSubmitted ? (
+          <button
+            onClick={handleSubmit}
+            disabled={!selectedOption}
+            className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+              selectedOption
+                ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40"
+                : "bg-blue-500/10 cursor-not-allowed text-blue-200/50 border border-blue-400/20"
+            }`}
+          >
+            Submit
+          </button>
+        ) : (
+          <button
+            onClick={handleNext}
+            className="px-4 py-2 text-sm bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200"
+          >
+            {questionNumber === totalQuestions
+              ? "Finish Quiz"
+              : "Next Question"}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -191,13 +191,14 @@ function TFQuestion({ question, onNext, questionNumber, totalQuestions }) {
   };
 
   return (
-    <Card className="bg-blue-500/10 backdrop-blur-md border border-blue-400/20">
-      <CardHeader>
-        <CardTitle className="text-lg text-blue-100">
+    <div>
+      {/* Question */}
+      <div className="mb-5">
+        <h3 className="text-lg font-medium text-white mb-5">
           {question.question}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </h3>
+
+        {/* True/False Options */}
         <div className="grid grid-cols-2 gap-4">
           {options.map((option) => (
             <button
@@ -220,33 +221,34 @@ function TFQuestion({ question, onNext, questionNumber, totalQuestions }) {
             </button>
           ))}
         </div>
+      </div>
 
-        <div className="flex justify-center pt-4">
-          {!isSubmitted ? (
-            <Button
-              onClick={handleSubmit}
-              disabled={!selectedOption}
-              className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
-                selectedOption
-                  ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40"
-                  : "bg-blue-500/10 cursor-not-allowed text-blue-200/50 border border-blue-400/20"
-              }`}
-            >
-              Submit
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              className="px-6 py-2 bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200"
-            >
-              {questionNumber === totalQuestions
-                ? "Finish Quiz"
-                : "Next Question"}
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      {/* Submit/Next Button */}
+      <div className="flex justify-center">
+        {!isSubmitted ? (
+          <button
+            onClick={handleSubmit}
+            disabled={!selectedOption}
+            className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+              selectedOption
+                ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40"
+                : "bg-blue-500/10 cursor-not-allowed text-blue-200/50 border border-blue-400/20"
+            }`}
+          >
+            Submit
+          </button>
+        ) : (
+          <button
+            onClick={handleNext}
+            className="px-4 py-2 text-sm bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200"
+          >
+            {questionNumber === totalQuestions
+              ? "Finish Quiz"
+              : "Next Question"}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -264,16 +266,6 @@ function FIBQuestion({ question, onNext, questionNumber, totalQuestions }) {
   };
 
   const { parts, blankCount } = parseQuestion();
-
-  // Generate options for dropdowns (this would typically come from the question data)
-  const getOptionsForBlank = (blankIndex) => {
-    // This is a simplified example - in reality, you'd get these from the question data
-    if (question.options && question.options[blankIndex]) {
-      return question.options[blankIndex];
-    }
-    // Fallback options
-    return ["option1", "option2", "option3", "correct answer"];
-  };
 
   const handleDropdownChange = (blankIndex, value) => {
     if (!isSubmitted) {
@@ -302,21 +294,14 @@ function FIBQuestion({ question, onNext, questionNumber, totalQuestions }) {
   };
 
   const isCorrectAnswer = (blankIndex) => {
-    const correctAnswers = Array.isArray(question.answer)
-      ? question.answer
-      : [question.answer];
-    return selectedAnswers[blankIndex] === correctAnswers[blankIndex];
+    return selectedAnswers[blankIndex] === question.answers[blankIndex];
   };
 
   return (
-    <Card className="bg-blue-500/10 backdrop-blur-md border border-blue-400/20">
-      <CardHeader>
-        <CardTitle className="text-lg text-blue-100">
-          Fill in the Blanks
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="text-blue-100 text-base leading-relaxed">
+    <div>
+      {/* Question with Fill-in-the-Blanks */}
+      <div className="mb-6">
+        <div className="text-white text-lg leading-relaxed">
           {parts.map((part, index) => (
             <span key={index}>
               {part}
@@ -325,7 +310,7 @@ function FIBQuestion({ question, onNext, questionNumber, totalQuestions }) {
                   value={selectedAnswers[index] || ""}
                   onChange={(e) => handleDropdownChange(index, e.target.value)}
                   disabled={isSubmitted}
-                  className={`mx-2 px-3 py-1 rounded border transition-all duration-200 ${
+                  className={`mx-2 px-3 py-2 rounded-lg border transition-all duration-200 ${
                     showResult
                       ? isCorrectAnswer(index)
                         ? "bg-green-500/20 border-green-400/50 text-green-100"
@@ -336,7 +321,7 @@ function FIBQuestion({ question, onNext, questionNumber, totalQuestions }) {
                   }`}
                 >
                   <option value="">Select...</option>
-                  {getOptionsForBlank(index).map((option, optIndex) => (
+                  {question.options.map((option, optIndex) => (
                     <option
                       key={optIndex}
                       value={option}
@@ -351,31 +336,44 @@ function FIBQuestion({ question, onNext, questionNumber, totalQuestions }) {
           ))}
         </div>
 
-        <div className="flex justify-center pt-4">
-          {!isSubmitted ? (
-            <Button
-              onClick={handleSubmit}
-              disabled={!allBlanksSelected}
-              className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
-                allBlanksSelected
-                  ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40"
-                  : "bg-blue-500/10 cursor-not-allowed text-blue-200/50 border border-blue-400/20"
-              }`}
-            >
-              Submit
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              className="px-6 py-2 bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200"
-            >
-              {questionNumber === totalQuestions
-                ? "Finish Quiz"
-                : "Next Question"}
-            </Button>
+        {/* Show correct answers when submitted and there are wrong answers */}
+        {showResult &&
+          Object.keys(selectedAnswers).some(
+            (index) => !isCorrectAnswer(parseInt(index)),
+          ) && (
+            <div className="mt-4 bg-green-500/10 backdrop-blur-md border border-green-400/20 rounded-lg p-4">
+              <p className="text-green-100">
+                Correct answers: {question.answers.join(", ")}
+              </p>
+            </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Submit/Next Button */}
+      <div className="flex justify-center">
+        {!isSubmitted ? (
+          <button
+            onClick={handleSubmit}
+            disabled={!allBlanksSelected}
+            className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+              allBlanksSelected
+                ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40"
+                : "bg-blue-500/10 cursor-not-allowed text-blue-200/50 border border-blue-400/20"
+            }`}
+          >
+            Submit
+          </button>
+        ) : (
+          <button
+            onClick={handleNext}
+            className="px-4 py-2 text-sm bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200"
+          >
+            {questionNumber === totalQuestions
+              ? "Finish Quiz"
+              : "Next Question"}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

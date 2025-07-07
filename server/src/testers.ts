@@ -10,11 +10,12 @@ interface MultipleChoice extends BaseQuestion {
 }
 
 interface TrueFalse extends BaseQuestion {
-  answer: boolean;
+  answer: string;
 }
 
 interface FillInBlank extends BaseQuestion {
-  answer: string[];
+  options: string[];
+  answers: string[];
 }
 
 type Question = MultipleChoice | TrueFalse | FillInBlank;
@@ -94,7 +95,7 @@ abstract class TesterABC {
             }
 
             // True/False validation
-            if ("answer" in question && typeof question.answer === "boolean") {
+            if ("answer" in question && typeof question.answer === "string" && (question.answer === "True" || question.answer === "False")) {
                 return {
                     question: question.question,
                     answer: question.answer
@@ -102,11 +103,16 @@ abstract class TesterABC {
             }
 
             // Fill in Blank validation
-            if ("answer" in question && Array.isArray(question.answer)) {
+            if ("options" in question && "answers" in question) {
+              if (Array.isArray(question.options) && Array.isArray(question.answers)) {
                 return {
                     question: question.question,
-                    answer: question.answer as string[]
+                    options: question.options as string[],
+                    answers: question.answers as string[]
                 } satisfies FillInBlank;
+              }
+
+              throw new Error(`FIB question at ${index} has invalid options or answers`);
             }
 
             throw new Error(`Question at index ${index} does not match any valid type`);
@@ -125,15 +131,16 @@ class MultipleChoiceTester extends TesterABC {
 
 class TrueFalseTester extends TesterABC {
     questionStructure = `
-    - question: string
-    - answer: boolean
+    - question: string (a question you will generate based on the content; it should include "according to the content ..." or a variant)
+    - answer: string (a string True, or False to that question)
     `;
 }
 
 class FillInBlankTester extends TesterABC {
     questionStructure = `
-    - question: string (with _____ for blanks)
-    - answer: string[] (possible correct answers)
+    - question: string (with _____ for blanks, 1 - 3 blanks in each question at most; vary the blanks in each question)
+    - options: string[] (size of options will be 4, none of the options should contain any commas, the options must correspond to the appropriate blanks in the question)
+    - answers: string[] (the correct answers in the exact order in which the blanks appear)
     `;
 }
 
