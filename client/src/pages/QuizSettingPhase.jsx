@@ -171,7 +171,7 @@ export default function QuizSettingPhase({ nextPhase, setQuizData }) {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
+            className={`px-8 py-3 cursor-pointer rounded-lg font-medium transition-all duration-200 ${
               isSubmitting
                 ? "bg-amber-500/20 cursor-not-allowed text-amber-200/50 border border-amber-400/20"
                 : "bg-amber-500/30 hover:bg-amber-500/40 text-amber-100 border border-amber-400/40 hover:border-amber-400/60"

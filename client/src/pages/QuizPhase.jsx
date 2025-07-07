@@ -1,11 +1,19 @@
 import { useState } from "react";
+import { useUser } from "../UserContext";
 
 // Main Quiz Component
-export default function Quiz({ questions, quizType }) {
+export default function Quiz({ questions, quizType, pageName, resetPhase }) {
+  const { selectedUser } = useUser();
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isQuizComplete, setIsQuizComplete] = useState(false);
+  const [userAnswers, setUserAnswers] = useState([]);
+  const [storeQuizState, setStoreQuizState] = useState("idle"); // 'idle', 'sending', 'success', 'failure'
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = (answer) => {
+    // Add the answer to the userAnswers array
+    setUserAnswers((prev) => [...prev, answer]);
+
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
@@ -13,13 +21,106 @@ export default function Quiz({ questions, quizType }) {
     }
   };
 
+  const handleStoreQuiz = async () => {
+    setStoreQuizState("sending");
+
+    const quizData = {
+      username: selectedUser,
+      pageName,
+      quizType,
+      questions,
+      userAnswers,
+    };
+
+    try {
+      const response = await fetch("http://localhost:3000/store-answers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(quizData),
+      });
+
+      if (response.ok) {
+        setStoreQuizState("success");
+      } else {
+        setStoreQuizState("failure");
+      }
+    } catch (error) {
+      console.error("Error storing quiz:", error);
+      setStoreQuizState("failure");
+    }
+  };
+
+  const handleNewQuiz = () => {
+    resetPhase(2);
+  };
+
+  const getStoreButtonConfig = () => {
+    switch (storeQuizState) {
+      case "sending":
+        return {
+          text: "Sending...",
+          className: "bg-blue-500/30 text-blue-100 border border-blue-400/40",
+          disabled: true,
+          cursor: "",
+        };
+      case "success":
+        return {
+          text: "Success!",
+          className:
+            "bg-green-500/30 text-green-100 border border-green-400/40",
+          disabled: true,
+          cursor: "",
+        };
+      case "failure":
+        return {
+          text: "Failure",
+          className:
+            "bg-red-500/30 hover:bg-red-500/40 text-red-100 border border-red-400/40",
+          disabled: false,
+          cursor: "cursor-pointer",
+        };
+      default: // 'idle'
+        return {
+          text: "Store Quiz",
+          className:
+            "bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40",
+          disabled: false,
+          cursor: "cursor-pointer",
+        };
+    }
+  };
+
   if (isQuizComplete) {
+    const storeButtonConfig = getStoreButtonConfig();
+
     return (
       <div className="bg-yellow-500/10 backdrop-blur-md border border-yellow-400/20 rounded-2xl p-8 text-center">
         <h2 className="text-2xl font-bold text-yellow-100 mb-4">
           Quiz Complete!
         </h2>
-        <p className="text-yellow-200/80">You have completed all questions.</p>
+        <p className="text-yellow-200/80 mb-6">
+          You have completed all questions.
+        </p>
+
+        {/* Action Buttons */}
+        <div className="flex gap-4 justify-center">
+          <button
+            onClick={handleStoreQuiz}
+            disabled={storeButtonConfig.disabled}
+            className={`px-6 py-3 text-sm rounded-lg font-medium transition-all duration-200 ${storeButtonConfig.className} ${storeButtonConfig.cursor}`}
+          >
+            {storeButtonConfig.text}
+          </button>
+
+          <button
+            onClick={handleNewQuiz}
+            className="px-6 py-3 text-sm bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40 rounded-lg font-medium transition-all duration-200 cursor-pointer"
+          >
+            New Quiz
+          </button>
+        </div>
       </div>
     );
   }
@@ -100,7 +201,7 @@ function MCQuestion({ question, onNext, questionNumber, totalQuestions }) {
   };
 
   const handleNext = () => {
-    onNext();
+    onNext(selectedOption);
     // Reset state for next question
     setSelectedOption(null);
     setIsSubmitted(false);
@@ -183,7 +284,7 @@ function TFQuestion({ question, onNext, questionNumber, totalQuestions }) {
   };
 
   const handleNext = () => {
-    onNext();
+    onNext(selectedOption);
     // Reset state for next question
     setSelectedOption(null);
     setIsSubmitted(false);
@@ -286,7 +387,12 @@ function FIBQuestion({ question, onNext, questionNumber, totalQuestions }) {
   };
 
   const handleNext = () => {
-    onNext();
+    // Convert selectedAnswers object to array for FIB questions
+    const answersArray = Object.keys(selectedAnswers)
+      .sort((a, b) => parseInt(a) - parseInt(b))
+      .map((key) => selectedAnswers[key]);
+
+    onNext(answersArray);
     // Reset state for next question
     setSelectedAnswers({});
     setIsSubmitted(false);

@@ -7,8 +7,9 @@ export default function SearchPhase({
   setHeadingSelections,
   nextPhase,
   resetPhase,
+  pageName,
+  setPageName
 }) {
-  const [pageName, setPageName] = useState("");
   const [response, setResponse] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
@@ -27,7 +28,6 @@ export default function SearchPhase({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pageName }),
       });
-      console.log("made the request");
       const data = await res.json();
 
       if (data.success) {

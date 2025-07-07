@@ -9,6 +9,7 @@ export default function Home() {
   const [headings, setHeadings] = useState(null);
   const [maxPhase, setMaxPhase] = useState(0);
   const [phase, setPhase] = useState(0);
+  const [pageName, setPageName] = useState("");
   const [headingSelections, setHeadingSelections] = useState({
     selections: new Set(),
     deselections: new Set(),
@@ -27,12 +28,26 @@ export default function Home() {
     setMaxPhase(phaseValue);
   };
 
+  const resetHome = () => {
+    setHeadings(null);
+    setMaxPhase(0);
+    setPhase(0);
+    setPageName("");
+    setHeadingSelections({
+      selections: new Set(),
+      deselections: new Set(),
+    });
+    setQuizData(null);
+  };
+
   const getCurrentPhase = () => {
     if (phase == 0) {
       return (
         <SearchPhase
           setHeadings={setHeadings}
           setHeadingSelections={setHeadingSelections}
+          pageName={pageName}
+          setPageName={setPageName}
           nextPhase={nextPhase}
           resetPhase={resetPhase}
         />
@@ -51,7 +66,14 @@ export default function Home() {
       return <QuizSettingPhase nextPhase={nextPhase} setQuizData={setQuizData} />;
     } else if (phase == 3) {
       console.log("Quiz Data:", quizData);
-      return <Quiz questions={quizData.questions} quizType={quizData.quizType} resetPhase={resetPhase} />;
+      return (
+        <Quiz
+          questions={quizData.questions}
+          quizType={quizData.quizType}
+          resetPhase={resetPhase}
+          pageName={pageName}
+        />
+    );
     }
   };
 
@@ -72,14 +94,14 @@ export default function Home() {
 
           {/* Phase Navigation */}
           <div className="pb-1 grid grid-cols-2 gap-4">
-            {phase - 1 >= 0 && <button
+            {phase != 3 && phase - 1 >= 0 && <button
               onClick={() => setPhase((prev) => Math.max(prev - 1, 0))}
               className="bg-blue-500/20 col-start-1 backdrop-blur-md border border-blue-400/30 rounded-lg px-4 py-3 cursor-pointer hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 text-blue-200 font-semibold text-sm text-center"
             >
               ← Previous
             </button>}
 
-            {phase + 1 <= maxPhase && <button
+            {phase != 3 && phase + 1 <= maxPhase && <button
               onClick={() => setPhase((prev) => prev + 1)}
               className="bg-blue-500/20 col-start-2 backdrop-blur-md border border-blue-400/30 rounded-lg px-4 py-3 cursor-pointer hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 text-blue-200 font-semibold text-sm text-center"
             >

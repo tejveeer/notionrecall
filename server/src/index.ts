@@ -88,6 +88,7 @@ app.post('/store-answers', async (req: any, res: any) => {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
+  console.log(username, pageName, quizType, questions, userAnswers);
   try {
     const quizId = await quizDb.storeQuizResults(username, pageName, quizType, questions, userAnswers);
     return res.json({ success: true, quizId });

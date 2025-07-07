@@ -44,16 +44,17 @@ export class QuizDatabase {
     userAnswers: any
   ): Promise<number> {
     const quizId = uuid();
+    const attemptDate = new Date(); // Automatically use the current date and time
 
     const result = await this.pool.query(
       `INSERT INTO public.quiz_attempts
-       (username, quiz_id, page_name, quiz_type, questions, user_answers)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       (username, quiz_id, page_name, quiz_type, questions, user_answers, attempt_date)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
-      [username, quizId, pageName, quizType, questions, userAnswers]
+      [username, quizId, pageName, quizType, JSON.stringify(questions), JSON.stringify(userAnswers), attemptDate]
     );
 
-    return result.rows[0].id;
+    return result.rows[0].quiz_id;
   }
 
   /**
