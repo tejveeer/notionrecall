@@ -183,7 +183,7 @@ export default function SelectionPhase({
           className={`px-6 py-2 rounded-lg transition-colors duration-200 ${
             isSubmitting
               ? "bg-yellow-500/10 cursor-not-allowed text-yellow-200/50 border border-yellow-400/20"
-              : "bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 border border-yellow-400/30"
+              : "bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 border border-yellow-400/30 cursor-pointer"
           }`}
         >
           {isSubmitting ? "Fetching..." : "Submit Selected"}
@@ -222,7 +222,7 @@ function Heading({
       {children?.length > 0 && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex-shrink-0 p-1 hover:bg-white/10 rounded transition-colors mt-4.5 text-white/70 hover:text-white"
+          className="flex-shrink-0 p-1 hover:bg-white/10 rounded transition-colors mt-4.5 text-white/70 hover:text-white cursor-pointer"
         >
           <ChevronRight
             className={`transform transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
@@ -235,7 +235,7 @@ function Heading({
           <Checkbox
             checked={isChecked}
             onCheckedChange={handleCheckboxChange}
-            className="rounded border-yellow-400/30 data-[state=checked]:bg-yellow-500/20 data-[state=checked]:border-yellow-400/50"
+            className="rounded cursor-pointer border-yellow-400/30 data-[state=checked]:bg-yellow-500/20 data-[state=checked]:border-yellow-400/50"
           />
           <CardTitle className="text-lg font-medium text-yellow-100 flex-1">
             {text}

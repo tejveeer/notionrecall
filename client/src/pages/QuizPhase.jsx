@@ -232,8 +232,8 @@ function MCQuestion({ question, onNext, questionNumber, totalQuestions }) {
                       : "bg-blue-500/5 border-blue-400/20 text-blue-200/70"
                   : selectedOption === option
                     ? "bg-blue-500/20 border-blue-400/50 text-blue-100"
-                    : "bg-blue-500/5 border-blue-400/20 text-blue-200/70 hover:bg-blue-500/10"
-              }`}
+                    : "bg-blue-500/5 border-blue-400/20 text-blue-200/70 hover:bg-blue-500/10 cursor-pointer"
+              } ${isSubmitted ? "" : "cursor-pointer"}`}
             >
               {option}
             </button>
@@ -249,7 +249,7 @@ function MCQuestion({ question, onNext, questionNumber, totalQuestions }) {
             disabled={!selectedOption}
             className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
               selectedOption
-                ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40"
+                ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40 cursor-pointer"
                 : "bg-blue-500/10 cursor-not-allowed text-blue-200/50 border border-blue-400/20"
             }`}
           >
@@ -258,7 +258,7 @@ function MCQuestion({ question, onNext, questionNumber, totalQuestions }) {
         ) : (
           <button
             onClick={handleNext}
-            className="px-4 py-2 text-sm bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200"
+            className="px-4 py-2 text-sm bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200 cursor-pointer"
           >
             {questionNumber === totalQuestions
               ? "Finish Quiz"
@@ -315,8 +315,8 @@ function TFQuestion({ question, onNext, questionNumber, totalQuestions }) {
                       : "bg-blue-500/5 border-blue-400/20 text-blue-200/70"
                   : selectedOption === option
                     ? "bg-blue-500/20 border-blue-400/50 text-blue-100"
-                    : "bg-blue-500/5 border-blue-400/20 text-blue-200/70 hover:bg-blue-500/10"
-              }`}
+                    : "bg-blue-500/5 border-blue-400/20 text-blue-200/70 hover:bg-blue-500/10 cursor-pointer"
+              } ${isSubmitted ? "" : "cursor-pointer"}`}
             >
               {option}
             </button>
@@ -332,7 +332,7 @@ function TFQuestion({ question, onNext, questionNumber, totalQuestions }) {
             disabled={!selectedOption}
             className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
               selectedOption
-                ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40"
+                ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40 cursor-pointer"
                 : "bg-blue-500/10 cursor-not-allowed text-blue-200/50 border border-blue-400/20"
             }`}
           >
@@ -341,7 +341,7 @@ function TFQuestion({ question, onNext, questionNumber, totalQuestions }) {
         ) : (
           <button
             onClick={handleNext}
-            className="px-4 py-2 text-sm bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200"
+            className="px-4 py-2 text-sm bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200 cursor-pointer"
           >
             {questionNumber === totalQuestions
               ? "Finish Quiz"
@@ -463,7 +463,7 @@ function FIBQuestion({ question, onNext, questionNumber, totalQuestions }) {
             disabled={!allBlanksSelected}
             className={`px-4 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
               allBlanksSelected
-                ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40"
+                ? "bg-blue-500/30 hover:bg-blue-500/40 text-blue-100 border border-blue-400/40 cursor-pointer"
                 : "bg-blue-500/10 cursor-not-allowed text-blue-200/50 border border-blue-400/20"
             }`}
           >
@@ -472,7 +472,7 @@ function FIBQuestion({ question, onNext, questionNumber, totalQuestions }) {
         ) : (
           <button
             onClick={handleNext}
-            className="px-4 py-2 text-sm bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200"
+            className="px-4 py-2 text-sm bg-yellow-500/30 hover:bg-yellow-500/40 text-yellow-100 border border-yellow-400/40 rounded-lg font-medium transition-all duration-200 cursor-pointer"
           >
             {questionNumber === totalQuestions
               ? "Finish Quiz"

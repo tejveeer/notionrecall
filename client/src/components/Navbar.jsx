@@ -18,7 +18,7 @@ export default function Navbar() {
 
         {/* User Selector */}
         <div className="relative group z-50">
-          <button className="bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400/30 hover:border-yellow-400/50 rounded-lg px-3 py-1 text-yellow-100 transition-all duration-200 font-medium">
+          <button className="bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400/30 hover:border-yellow-400/50 rounded-lg px-3 py-1 text-yellow-100 transition-all duration-200 font-medium cursor-pointer">
             {selectedUser}
           </button>
 
@@ -28,7 +28,7 @@ export default function Navbar() {
               <button
                 key={user.value}
                 onClick={() => handleUserSelect(user.value)}
-                className={`w-full text-left px-3 py-2 text-sm transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg ${
+                className={`w-full text-left px-3 py-2 text-sm transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg cursor-pointer ${
                   selectedUser === user.value
                     ? "bg-yellow-500/30 text-yellow-100"
                     : "text-blue-200 hover:bg-blue-500/20"
