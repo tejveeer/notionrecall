@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useUser } from "../UserContext";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 export default function History() {
   const { selectedUser } = useUser();
+  const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,8 +56,7 @@ export default function History() {
   };
 
   const handleQuizClick = (quiz) => {
-    // Placeholder for future functionality
-    console.log("Quiz clicked:", quiz);
+    navigate(`/quiz-view?quizId=${quiz.quiz_id}`);
   };
 
   return (

@@ -3,11 +3,6 @@ import { Pool } from 'pg';
 import { v4 as uuid } from 'uuid';
 
 interface QuizAttempt {
-  id: number;
-  username: string;
-  quiz_id: string;
-  page_name: string;
-  attempt_date: Date;
   quiz_type: string;
   questions: any; // JSONB data
   user_answers: any; // JSONB data
@@ -82,7 +77,7 @@ export class QuizDatabase {
    */
   async getQuizAttemptById(quizId: string): Promise<QuizAttempt | null> {
     const result = await this.pool.query(
-      `SELECT id, username, quiz_id, page_name, attempt_date, quiz_type, questions, user_answers
+      `SELECT quiz_type, questions, user_answers
        FROM public.quiz_attempts
        WHERE quiz_id = $1`,
       [quizId]
@@ -94,11 +89,6 @@ export class QuizDatabase {
 
     const row = result.rows[0];
     return {
-      id: row.id,
-      username: row.username,
-      quiz_id: row.quiz_id,
-      page_name: row.page_name,
-      attempt_date: row.attempt_date,
       quiz_type: row.quiz_type,
       questions: row.questions,
       user_answers: row.user_answers,

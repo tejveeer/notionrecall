@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import History from "./pages/History";
+import QuizView from "./pages/QuizView";
 
 export default function App() {
   return (
@@ -9,8 +10,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/history" element={<History />} />
+        <Route path="/quiz-view" element={<QuizView />} />
       </Routes>
     </div>
   );
 }
-
