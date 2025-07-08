@@ -48,7 +48,7 @@ export default function Navbar() {
           onClick={() => navigate("/")}
           className="bg-yellow-500/20 cursor-pointer hover:bg-yellow-500/30 border border-yellow-400/30 hover:border-yellow-400/50 rounded-lg px-3 py-1 text-yellow-100 font-medium transition-all duration-200"
         >
-          Search
+          Home
         </button>
 
         {/* History */}
